@@ -1,16 +1,24 @@
 //! Binary that collects information about the
 //! currently running system and sends it to the server
 
-use std::{thread::sleep, time::Duration};
-
-use remote_top::SystemInformation;
+use clap::Parser;
+use remote_top::{CommandLineArgs, SystemInformation};
+use std::{
+    net::{Ipv4Addr, SocketAddr},
+    thread::sleep,
+    time::Duration,
+};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let _args: CommandLineArgs = CommandLineArgs::parse();
+
     let refresh_params = RefreshKind::nothing()
         .with_memory(MemoryRefreshKind::everything())
         .with_cpu(CpuRefreshKind::everything());
     let mut sys = System::new_with_specifics(refresh_params);
+    let addr = SocketAddr::from((Ipv4Addr::LOCALHOST, 3000));
 
     loop {
         sys.refresh_specifics(refresh_params);
@@ -26,7 +34,15 @@ fn main() {
             ram_usage: sys.used_memory(),
         };
 
-        println!("{:?}", info);
+        println!("{:?}", serde_json::to_string(&info)?);
+        let client = reqwest::Client::new();
+        let res = client
+            .post(format!("http://{addr}/post"))
+            .json(&info)
+            .send()
+            .await?;
+
+        println!("{:?}", res);
 
         sleep(Duration::from_secs(1));
     }
