@@ -2,14 +2,12 @@
 //! displays it.
 use std::net::{Ipv4Addr, SocketAddr};
 
-use axum::{Json, Router, response::Json as AxumJson, routing::post};
-use clap::Parser;
-use remote_top::{CommandLineArgs, SystemInformation};
+use axum::{Json, Router, routing::post};
+use remote_top::{SystemInformation, create_command_line_arg_parser};
 
-async fn receive_json(Json(payload): Json<SystemInformation>) -> AxumJson<SystemInformation> {
+async fn receive_json(Json(payload): Json<SystemInformation>) -> axum::http::StatusCode {
     println!("Server received: {:?}", payload);
-    // Echo the data back as JSON
-    AxumJson(payload)
+    axum::http::StatusCode::OK
 }
 
 async fn shutdown_signal() {
@@ -22,7 +20,11 @@ async fn shutdown_signal() {
 
 #[tokio::main]
 async fn main() {
-    let _args: CommandLineArgs = CommandLineArgs::parse();
+    let _args = create_command_line_arg_parser(
+        "Server that will receive system utilization information and display it on the screen"
+            .to_string(),
+    );
+
     // build our application with a single route
     let app = Router::new().route("/post", post(receive_json));
     // Run server in background task on localhost:3000

@@ -1,5 +1,6 @@
 //! Common definitions for the client and server
 
+use clap::{CommandFactory, FromArgMatches};
 use clap::{Parser, ValueEnum};
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +10,6 @@ pub enum CommunicationProtocol {
     Grpc,
 }
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct CommandLineArgs {
@@ -21,4 +21,11 @@ pub struct CommandLineArgs {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SystemInformation {
     pub ram_usage: u64,
+}
+
+/// Helper to parse with custom about text
+pub fn create_command_line_arg_parser(about_text: String) -> CommandLineArgs {
+    let mut cmd = CommandLineArgs::command();
+    cmd = cmd.about(about_text);
+    CommandLineArgs::from_arg_matches(&cmd.get_matches()).unwrap()
 }

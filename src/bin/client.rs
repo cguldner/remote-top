@@ -1,8 +1,7 @@
 //! Binary that collects information about the
 //! currently running system and sends it to the server
 
-use clap::Parser;
-use remote_top::{CommandLineArgs, SystemInformation};
+use remote_top::{SystemInformation, create_command_line_arg_parser};
 use std::{
     net::{Ipv4Addr, SocketAddr},
     thread::sleep,
@@ -12,7 +11,9 @@ use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _args: CommandLineArgs = CommandLineArgs::parse();
+    let _args = create_command_line_arg_parser(
+        "Client that will gather system utilization metrics and send to a server".to_string(),
+    );
 
     let refresh_params = RefreshKind::nothing()
         .with_memory(MemoryRefreshKind::everything())
